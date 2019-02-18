@@ -1,15 +1,26 @@
 buildscript {
     ext {
-        kotlinVersion = '1.3.10'
+        kotlinVersion = '1.3.11'
         springBootVersion = '2.1.0.RELEASE'
     }
     repositories {
         mavenCentral()
+        jcenter()
     }
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
         classpath("org.jetbrains.kotlin:kotlin-allopen:${kotlinVersion}")
+        classpath("org.jfrog.buildinfo:build-info-extractor-gradle:4.9.1")
+    }
+}
+
+allprojects {
+    apply plugin: 'com.jfrog.artifactory'
+    apply plugin: 'maven-publish'
+
+    repositories {
+        jcenter()
     }
 }
 
@@ -20,7 +31,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 group = 'com.wellsen'
-version = '0.0.1-SNAPSHOT'
+version = '1.0.1'
 sourceCompatibility = 1.8
 compileKotlin {
     kotlinOptions {
@@ -39,7 +50,6 @@ repositories {
     mavenCentral()
 }
 
-
 dependencies {
     implementation('org.springframework.boot:spring-boot-starter')
     implementation('org.springframework.boot:spring-boot-starter-security')
@@ -51,4 +61,59 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     testImplementation('org.springframework.boot:spring-boot-starter-webflux')
     testImplementation('org.springframework.boot:spring-boot-starter-test')
+}
+
+//create a single Jar with all dependencies
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': 'com.wellsen.jwttestkotlinwebflux.JwttestKotlinWebfluxApplication'
+    }
+    baseName = project.name
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+publishing.publications {
+    //noinspection GroovyAssignabilityCheck
+    jar(MavenPublication) {
+        groupId "${group}"
+        artifactId "${project.name}"
+
+        // Tell maven to prepare the generated "*.aar" file for publishing
+        artifact("$buildDir/libs/${project.name}-${version}.jar")
+    }
+}
+
+artifactory {
+    def propsFile = rootProject.file('artifactory.properties')
+    def props = new Properties()
+    if (propsFile.exists()) {
+        props.load(new FileInputStream(propsFile))
+    }
+
+    clientConfig.setIncludeEnvVars(true)
+
+    //The base Artifactory URL if not overridden by the publisher/resolver
+    contextUrl = props['artifactory_contextUrl']
+
+    publish {
+        repository {
+            repoKey = props['repositoryName'] // The Artifactory repository key to publish to
+            username = props['artifactory_user'] // The publisher user name
+            password = props['artifactory_password'] // The publisher password
+        }
+
+        defaults {
+            // Reference to Gradle publications defined in the build script.
+            // This is how we tell the Artifactory Plugin which artifacts should be
+            // published to Artifactory.
+            publications('jar')
+            publishArtifacts = true
+        }
+    }
+
+    // Redefine basic properties of the build info object
+    clientConfig.setEnvVarsExcludePatterns('*password*,*secret*')
+    clientConfig.timeout = 60
+    // Artifactory connection timeout (in seconds). The default timeout is 300 seconds.
 }
