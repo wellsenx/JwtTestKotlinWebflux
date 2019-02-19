@@ -33,6 +33,7 @@ apply plugin: 'io.spring.dependency-management'
 group = 'com.wellsen'
 version = '1.0.1'
 sourceCompatibility = 1.8
+
 compileKotlin {
     kotlinOptions {
         freeCompilerArgs = ["-Xjsr305=strict"]
@@ -64,7 +65,7 @@ dependencies {
 }
 
 //create a single Jar with all dependencies
-task fatJar(type: Jar) {
+task buildFatJar(type: Jar) {
     manifest {
         attributes 'Main-Class': 'com.wellsen.jwttestkotlinwebflux.JwttestKotlinWebfluxApplication'
     }
