@@ -114,6 +114,7 @@ artifactory {
     }
 
     // Redefine basic properties of the build info object
+    clientConfig.setIncludeEnvVars(true)
     clientConfig.setEnvVarsExcludePatterns('*password*,*secret*')
     clientConfig.timeout = 60
     // Artifactory connection timeout (in seconds). The default timeout is 300 seconds.
