@@ -12,15 +12,21 @@ buildscript {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
         classpath("org.jetbrains.kotlin:kotlin-allopen:${kotlinVersion}")
         classpath("org.jfrog.buildinfo:build-info-extractor-gradle:4.9.1")
+        classpath("org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.6.2")
     }
 }
 
 allprojects {
     apply plugin: 'com.jfrog.artifactory'
     apply plugin: 'maven-publish'
+    apply plugin: 'jacoco'
 
     repositories {
         jcenter()
+    }
+
+    jacoco {
+        toolVersion = "0.8.3"
     }
 }
 
@@ -29,7 +35,11 @@ apply plugin: 'kotlin-spring'
 apply plugin: 'eclipse'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
+apply plugin: 'jacoco'
+apply plugin: 'org.sonarqube'
+apply from: 'sonarqube-config.gradle'
 
+def name = 'JWT Test Kotlin Webflux'
 group = 'com.wellsen'
 version = '1.0.1'
 sourceCompatibility = 1.8
@@ -47,6 +57,10 @@ compileTestKotlin {
     }
 }
 
+sourceSets["main"].java {
+    srcDir("src/main/kotlin")
+}
+
 repositories {
     mavenCentral()
 }
@@ -62,6 +76,48 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     testImplementation('org.springframework.boot:spring-boot-starter-webflux')
     testImplementation('org.springframework.boot:spring-boot-starter-test')
+}
+
+jacocoTestReport {
+    dependsOn "test"
+    reports {
+        xml.enabled = true
+        html.enabled = true
+        csv.enabled = false
+        //noinspection GrDeprecatedAPIUsage
+        xml.destination = "${buildDir}/reports/jacoco/jacocoTestReport.xml"
+        //noinspection GrDeprecatedAPIUsage
+        html.destination = "${buildDir}/reports/jacoco/jacocoTestReport.html"
+        //noinspection GrDeprecatedAPIUsage
+        csv.destination = "${buildDir}/reports/jacocoTestReport.csv"
+
+        sourceDirectories = files(sourceSets["main"].allSource.srcDirs)
+        classDirectories = files(sourceSets["main"].output)
+        executionData = files(fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec"))
+    }
+}
+
+sonarqube {
+    properties {
+        property 'sonar.host.url', sonar_url
+        property "sonar.login", sonar_login
+        property "sonar.sourceEncoding", "UTF-8"
+        property "sonar.verbose", true
+        property "sonar.projectName", name
+        property "sonar.projectVersion", version
+        property "sonar.issuesReport.html.enable", "true"
+        property "sonar.issuesReport.console.enable", "true"
+        property "sonar.language", "kotlin"
+        
+        property 'sonar.java.binaries', "${buildDir}/classes/kotlin/main"
+        property 'sonar.java.test.binaries', "${buildDir}/classes/kotlin/test"
+        property 'sonar.jacoco.reportPath', fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec")
+        property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/jacocoTestReport.xml"
+
+        property "sonar.java.coveragePlugin", "jacoco"
+        property "detekt.sonar.kotlin.config.path", "detekt-config.yml"
+        property 'sonar.exclusions', '**/*.js,**/*.css,**/*.html'
+    }
 }
 
 //create a single Jar with all dependencies

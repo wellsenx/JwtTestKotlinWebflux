@@ -27,3 +27,4 @@
 
 ### Properties files ###
 *.properties
+sonarqube-config.gradle
