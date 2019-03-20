@@ -87,7 +87,7 @@ jacocoTestReport {
         //noinspection GrDeprecatedAPIUsage
         xml.destination = "${buildDir}/reports/jacoco/jacocoTestReport.xml"
         //noinspection GrDeprecatedAPIUsage
-        html.destination = "${buildDir}/reports/jacoco/jacocoTestReport.html"
+        html.destination = "${buildDir}/reports/jacoco/jacocoTestReport"
         //noinspection GrDeprecatedAPIUsage
         csv.destination = "${buildDir}/reports/jacocoTestReport.csv"
 
@@ -116,7 +116,6 @@ sonarqube {
 
         property "sonar.java.coveragePlugin", "jacoco"
         property "detekt.sonar.kotlin.config.path", "detekt-config.yml"
-        property 'sonar.exclusions', '**/*.js,**/*.css,**/*.html'
     }
 }
 
