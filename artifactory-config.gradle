@@ -1,0 +1,31 @@
+apply from: "artifactory.gradle"
+
+publishing.publications {
+    //noinspection GroovyAssignabilityCheck
+    jar(MavenPublication) {
+        groupId "${rootProject.group}"
+        artifactId "${rootProject.name}"
+        artifact("$buildDir/libs/${rootProject.name}-${rootProject.version}.jar")
+    }
+}
+
+artifactory {
+    contextUrl = "${artifactory_contextUrl}"
+
+    publish {
+        repository {
+            repoKey = testRepositoryName
+            username = artifactory_user
+            password = artifactory_password
+        }
+
+        defaults {
+            publications('jar')
+            publishArtifacts = true
+        }
+    }
+
+    clientConfig.setIncludeEnvVars(true)
+    clientConfig.setEnvVarsExcludePatterns('*password*,*secret*')
+    clientConfig.timeout = 60
+}
