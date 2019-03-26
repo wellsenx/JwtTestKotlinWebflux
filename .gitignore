@@ -28,4 +28,4 @@
 ### Properties files ###
 *.properties
 artifactory.gradle
-sonarqube-config.gradle
+sonarqube.gradle

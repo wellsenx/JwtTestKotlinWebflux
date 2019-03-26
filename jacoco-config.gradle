@@ -1,0 +1,34 @@
+apply plugin: 'jacoco'
+
+jacoco {
+    toolVersion = "0.8.3"
+}
+
+jacocoTestReport {
+    dependsOn "test"
+    
+    group = "Reporting"
+    description = "Generate Jacoco coverage reports"
+    
+    reports {
+        xml.enabled = true
+        html.enabled = true
+        csv.enabled = false
+        //noinspection GrDeprecatedAPIUsage
+        xml.destination = "${buildDir}/reports/jacoco/jacocoTestReport.xml"
+        //noinspection GrDeprecatedAPIUsage
+        html.destination = "${buildDir}/reports/jacoco/jacocoTestReport"
+        //noinspection GrDeprecatedAPIUsage
+        csv.destination = "${buildDir}/reports/jacocoTestReport.csv"
+
+        sourceDirectories = files([
+                sourceSets["main"].allSource.srcDirs,
+                sourceSets["test"].allSource.srcDirs
+        ])
+        classDirectories = files([
+                sourceSets["main"].output,
+                sourceSets["test"].output
+        ])
+        executionData = files(fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec"))
+    }
+}
